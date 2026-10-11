@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Rotation — workout log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#131519;          /* iron */
+    --surface:#1b1e24;
+    --surface-2:#22262e;
+    --line:#2d323c;
+    --ink:#f2f0ea;          /* chalk */
+    --ink-dim:#9aa1ad;
+    --ink-faint:#5c636f;
+    --brass:#e8b33d;        /* the one bold colour */
+    --steel:#5fb0c9;        /* "done" / logged */
+    --danger:#d8694f;
+    --r:10px;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *,*::before,*::after{box-sizing:inherit}
+  html,body{margin:0}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%;
+  }
+  .display{font-family:"Barlow Condensed",system-ui,sans-serif;letter-spacing:.3px}
+  input,button,select{font-family:inherit;font-size:16px}
+  .wrap{max-width:560px;margin:0 auto;padding:0 14px 120px}
+
+  /* ---- header ---- */
+  header{
+    position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+    background:linear-gradient(var(--bg) 70%, transparent);
+    padding:16px 0 10px;
+  }
+  .hrow{display:flex;align-items:center;gap:14px}
+  .badge{
+    width:58px;height:58px;flex:0 0 auto;border-radius:var(--r);
+    background:var(--brass);color:#1a1300;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Barlow Condensed";font-weight:700;font-size:38px;line-height:1;
+  }
+  .htext h1{margin:0;font-size:26px;font-weight:600;line-height:1}
+  .htext p{margin:2px 0 0;color:var(--ink-dim);font-size:15px}
+  .dots{display:flex;gap:6px;margin-left:auto;align-self:flex-start;padding-top:4px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--line)}
+  .dot.on{background:var(--brass)}
+
+  /* ---- session switch ---- */
+  .switch{display:flex;gap:6px;margin-top:12px}
+  .switch button{
+    flex:1;background:var(--surface);border:1px solid var(--line);color:var(--ink-dim);
+    padding:8px 0;border-radius:var(--r);font-weight:600;cursor:pointer;
+    font-family:"Barlow Condensed";font-size:18px;
+  }
+  .switch button.sel{background:var(--surface-2);color:var(--ink);border-color:var(--brass)}
+  .switch small{display:block;font-family:system-ui;font-size:11px;font-weight:400;color:var(--ink-faint)}
+  .switch button.sel small{color:var(--ink-dim)}
+
+  /* ---- exercise ---- */
+  .ex{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+      padding:12px 12px 6px;margin-top:10px}
+  .ex-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .ex-name{font-family:"Barlow Condensed";font-weight:600;font-size:21px;line-height:1.05;
+           cursor:pointer;border-bottom:1px dashed transparent}
+  .ex-name:active{border-bottom-color:var(--ink-faint)}
+  .ex-target{color:var(--ink-dim);font-size:13px;white-space:nowrap}
+  .sets{margin-top:8px}
+  .setrow{display:grid;grid-template-columns:28px 1fr 1fr;gap:8px;align-items:center;margin-bottom:6px}
+  .setno{font-family:"Barlow Condensed";font-weight:600;color:var(--ink-faint);font-size:17px;text-align:center}
+  .setrow input{
+    width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:11px 10px;text-align:center;font-variant-numeric:tabular-nums;
+  }
+  .setrow input::placeholder{color:var(--ink-faint)}
+  .setrow input:focus{outline:none;border-color:var(--brass);background:#262b33}
+  .setrow input.done{border-color:var(--steel)}
+  .collabel{display:grid;grid-template-columns:28px 1fr 1fr;gap:8px;margin:2px 0 4px;
+            color:var(--ink-faint);font-size:11px}
+  .collabel span{text-align:center}
+
+  /* ---- finish bar ---- */
+  .finish{position:fixed;left:0;right:0;bottom:0;z-index:30;
+    padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(transparent, var(--bg) 32%)}
+  .finish .inner{max-width:560px;margin:0 auto}
+  .btn-main{width:100%;background:var(--brass);color:#1a1300;border:none;border-radius:var(--r);
+    padding:16px;font-family:"Barlow Condensed";font-weight:700;font-size:21px;cursor:pointer}
+  .btn-main:active{transform:translateY(1px)}
+  .btn-main.ghost{background:transparent;color:var(--ink-dim);border:1px solid var(--line)}
+
+  /* ---- nav ---- */
+  nav{display:flex;gap:6px;margin:18px 0 4px}
+  nav button{flex:1;background:none;border:none;color:var(--ink-faint);
+    padding:8px 0;cursor:pointer;font-weight:600;border-bottom:2px solid transparent}
+  nav button.sel{color:var(--ink);border-bottom-color:var(--brass)}
+
+  /* ---- history ---- */
+  .hist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:12px;margin-top:10px}
+  .hist h3{margin:0 0 2px;font-family:"Barlow Condensed";font-size:19px;font-weight:600}
+  .hist .meta{color:var(--ink-dim);font-size:13px;margin-bottom:8px}
+  .hist .line{font-size:14px;color:var(--ink-dim);padding:3px 0;border-top:1px solid var(--line)}
+  .hist .line b{color:var(--ink);font-weight:600}
+  .sync{font-size:12px;padding:2px 7px;border-radius:20px;border:1px solid var(--line);color:var(--ink-faint)}
+  .sync.ok{color:var(--steel);border-color:var(--steel)}
+
+  /* ---- settings ---- */
+  .set-block{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-top:10px}
+  .set-block label{display:block;font-weight:600;margin-bottom:4px}
+  .set-block p{color:var(--ink-dim);font-size:13px;margin:0 0 10px}
+  .set-block input[type=url]{width:100%;background:var(--surface-2);border:1px solid var(--line);
+    color:var(--ink);border-radius:8px;padding:11px}
+  .set-block input:focus{outline:none;border-color:var(--brass)}
+  .row2{display:flex;gap:8px;margin-top:10px}
+  .row2 button{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+    padding:11px;border-radius:8px;cursor:pointer;font-weight:600}
+  .muted{color:var(--ink-faint);font-size:12px;margin-top:14px}
+
+  .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);
+    background:var(--steel);color:#06222b;padding:10px 18px;border-radius:30px;font-weight:600;
+    opacity:0;transition:.25s;z-index:40;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hidden{display:none}
+  dialog{background:var(--surface);color:var(--ink);border:1px solid var(--line);
+    border-radius:var(--r);max-width:340px;width:90%;padding:14px}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  dialog h4{margin:0 0 10px;font-family:"Barlow Condensed";font-size:20px}
+  .swap-opt{display:block;width:100%;text-align:left;background:var(--surface-2);
+    border:1px solid var(--line);color:var(--ink);padding:10px;border-radius:8px;margin-bottom:6px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="hrow">
+      <div class="badge display" id="badge">A</div>
+      <div class="htext">
+        <h1 id="sessTitle">Push</h1>
+        <p id="sessSub">Chest · shoulders · triceps</p>
+      </div>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="switch" id="switch"></div>
+  </header>
+
+  <nav id="nav">
+    <button data-view="train" class="sel">Train</button>
+    <button data-view="history">History</button>
+    <button data-view="settings">Settings</button>
+  </nav>
+
+  <!-- TRAIN -->
+  <section id="view-train">
+    <div id="exList"></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="view-history" class="hidden"></section>
+
+  <!-- SETTINGS -->
+  <section id="view-settings" class="hidden">
+    <div class="set-block">
+      <label for="url">Google Sheet sync endpoint</label>
+      <p>Paste the web-app / API URL that accepts a logged session. Leave blank to keep everything on this device only. Sessions save locally either way.</p>
+      <input type="url" id="url" placeholder="https://…" inputmode="url" />
+      <div class="row2">
+        <button id="saveUrl">Save endpoint</button>
+        <button id="syncAll">Sync unsynced</button>
+      </div>
+    </div>
+    <div class="set-block">
+      <label>Your data</label>
+      <p>Everything lives in this browser until you sync. Export a JSON backup any time.</p>
+      <div class="row2">
+        <button id="exportBtn">Export backup</button>
+        <button id="resetBtn" style="color:var(--danger);border-color:var(--danger)">Clear all</button>
+      </div>
+    </div>
+    <p class="muted" id="verNote"></p>
+  </section>
+</div>
+
+<div class="finish">
+  <div class="inner" id="finishWrap">
+    <button class="btn-main" id="finishBtn">Finish session</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<dialog id="swapDlg">
+  <h4 id="swapTitle">Swap exercise</h4>
+  <div id="swapOpts"></div>
+  <button class="btn-main ghost" id="swapCancel" style="margin-top:4px">Keep current</button>
+</dialog>
+
+<script>
+/* ============================================================
+   PLAN — edit here to change exercises.
+   metric: "reps" or "time" (time logs seconds). weighted:false hides weight.
+   ============================================================ */
+const PLAN = {
+  A: { title:"Push", sub:"Chest · shoulders · triceps", group:"push",
+    ex:[
+      {n:"Incline Dumbbell Bench Press", sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Flat Dumbbell Press",          sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Standing Overhead Press",      sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Dumbbell Lateral Raises",      sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Parallel Bar Dips",            sets:3, target:"3 × 10", metric:"reps", weighted:false},
+      {n:"Triceps Rope Pushdowns",       sets:3, target:"3 × 10", metric:"reps"},
+    ]},
+  B: { title:"Pull", sub:"Back · traps · biceps · forearms", group:"pull",
+    ex:[
+      {n:"Lat Pulldowns / Pull-Ups",     sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Seated Cable Rows",            sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Single-Arm Dumbbell Rows",     sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Face Pulls",                   sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Alternating Dumbbell Curls",   sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Hammer Curls",                 sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Farmer's Carries",             sets:3, target:"3 × 1 min", metric:"time"},
+    ]},
+  C: { title:"Legs & core", sub:"Quads · hams · glutes · calves · abs", group:"legs",
+    ex:[
+      {n:"Goblet Squats",                sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Romanian Deadlifts",           sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Walking Lunges",               sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Standing Calf Raises",         sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Glute Bridges / Hip Thrusts",  sets:3, target:"3 × 10", metric:"reps"},
+      {n:"Hanging Leg Raises",           sets:3, target:"3 × 10", metric:"reps", weighted:false},
+      {n:"Forearm Plank",                sets:3, target:"3 × 45 s", metric:"time", weighted:false},
+    ]},
+};
+const SWAP = {
+  push:["Push-Ups","Standing Cable Flyes","Pike Push-Ups","Front Dumbbell Raises","Reverse Cable Flyes","Overhead Triceps Extensions","Skull Crushers","Bench Dips","Triceps Kickbacks"],
+  pull:["Dumbbell Shrugs","Incline Dumbbell Curls","Cable Preacher Curls","Concentration Curls","Reverse Curls","Wrist Curls","Reverse Wrist Curls","Dead Hangs"],
+  legs:["Russian Twists","L-Sit Tucks","Cable Crunches","Bulgarian Split Squats","Leg Press"],
+};
+const ORDER = ["A","B","C"];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const LS = {
+  sessions:"rot.sessions", idx:"rot.idx", url:"rot.url", overrides:"rot.overrides"
+};
+const read = (k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}};
+const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+
+let sessions = read(LS.sessions, []);
+let rotIdx   = read(LS.idx, 0);                 // index into ORDER for next session
+let endpoint = read(LS.url, "");
+let overrides= read(LS.overrides, {});          // {A:[names...]} swapped exercise names
+let viewKey  = ORDER[rotIdx % 3];               // currently displayed session
+let draft    = {};                              // {exIndex:{set:{w,r}}}
+
+/* exercises for a session, applying any swaps */
+function exOf(key){
+  const base = PLAN[key].ex.map(e=>({...e}));
+  const ov = overrides[key]||{};
+  for(const i in ov){ if(base[i]) base[i] = {...base[i], n:ov[i]}; }
+  return base;
+}
+/* most recent logged values for an exercise name -> array of {w,r} */
+function lastFor(name){
+  for(let i=sessions.length-1;i>=0;i--){
+    const hit = sessions[i].entries.find(e=>e.exercise===name);
+    if(hit) return hit.sets;
+  }
+  return null;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const $=s=>document.querySelector(s);
+const el=(t,c)=>{const n=document.createElement(t);if(c)n.className=c;return n;};
+
+function renderHeader(){
+  const p=PLAN[viewKey];
+  $("#badge").textContent=viewKey;
+  $("#sessTitle").textContent=p.title;
+  $("#sessSub").textContent=p.sub;
+  const dots=$("#dots");dots.innerHTML="";
+  ORDER.forEach((k,i)=>{const d=el("div","dot"+(i===rotIdx%3?" on":""));dots.appendChild(d);});
+  const sw=$("#switch");sw.innerHTML="";
+  ORDER.forEach(k=>{
+    const b=el("button","display"+(k===viewKey?" sel":""));
+    b.innerHTML=k+"<small>"+PLAN[k].title+"</small>";
+    b.onclick=()=>{viewKey=k;draft={};renderTrain();renderHeader();};
+    sw.appendChild(b);
+  });
+  // finish button only makes sense on the session that's "due"
+  $("#finishBtn").textContent = (viewKey===ORDER[rotIdx%3])
+    ? "Finish "+viewKey+" · log session"
+    : "Log "+viewKey+" (out of rotation)";
+}
+
+function renderTrain(){
+  const list=$("#exList");list.innerHTML="";
+  exOf(viewKey).forEach((ex,ei)=>{
+    const card=el("div","ex");
+    const head=el("div","ex-head");
+    const name=el("div","ex-name display");name.textContent=ex.n;
+    name.title="Tap to swap";
+    name.onclick=()=>openSwap(ei);
+    const tgt=el("div","ex-target");tgt.textContent=ex.target;
+    head.append(name,tgt);card.append(head);
+
+    const last=lastFor(ex.n);
+    const wrap=el("div","sets");
+    const unit = ex.metric==="time" ? "sec" : "reps";
+    const lab=el("div","collabel");
+    lab.innerHTML="<span></span><span>"+(ex.weighted===false?"—":"kg")+"</span><span>"+unit+"</span>";
+    wrap.append(lab);
+
+    for(let s=0;s<ex.sets;s++){
+      const row=el("div","setrow");
+      const no=el("div","setno display");no.textContent=s+1;
+      const w=el("input");w.type="number";w.inputMode="decimal";w.dataset.ex=ei;w.dataset.set=s;w.dataset.f="w";
+      const r=el("input");r.type="number";r.inputMode="numeric";r.dataset.ex=ei;r.dataset.set=s;r.dataset.f="r";
+      if(ex.weighted===false){w.disabled=true;w.placeholder="—";}
+      else w.placeholder = last&&last[s]&&last[s].w!=null ? String(last[s].w) : "";
+      r.placeholder = last&&last[s]&&last[s].r!=null ? String(last[s].r) : "";
+      const mark=inp=>{inp.oninput=()=>inp.classList.toggle("done",inp.value!=="")};
+      mark(w);mark(r);
+      row.append(no,w,r);wrap.append(row);
+    }
+    card.append(wrap);list.append(card);
+  });
+}
+
+function collectDraft(){
+  const exs=exOf(viewKey);
+  const entries=[];
+  let any=false;
+  exs.forEach((ex,ei)=>{
+    const sets=[];
+    for(let s=0;s<ex.sets;s++){
+      const w=$(`input[data-ex="${ei}"][data-set="${s}"][data-f="w"]`);
+      const r=$(`input[data-ex="${ei}"][data-set="${s}"][data-f="r"]`);
+      const wv=w&&w.value!==""?Number(w.value):null;
+      const rv=r&&r.value!==""?Number(r.value):null;
+      if(wv!=null||rv!=null)any=true;
+      sets.push({w:wv,r:rv});
+    }
+    entries.push({exercise:ex.n,metric:ex.metric,sets});
+  });
+  return {any,entries};
+}
+
+/* ============================================================
+   HISTORY
+   ============================================================ */
+function renderHistory(){
+  const v=$("#view-history");v.innerHTML="";
+  if(!sessions.length){
+    const e=el("div","hist");e.innerHTML="<h3>No sessions yet</h3><div class='meta'>Log your first one from the Train tab and it’ll show up here.</div>";
+    v.append(e);return;
+  }
+  [...sessions].reverse().forEach(ss=>{
+    const c=el("div","hist");
+    const h=el("h3");h.textContent=PLAN[ss.session]?.title ? ss.session+" · "+PLAN[ss.session].title : "Session "+ss.session;
+    const badge=el("span","sync"+(ss.synced?" ok":""));badge.textContent=ss.synced?"synced":"local";
+    h.style.display="flex";h.style.justifyContent="space-between";h.append(badge);
+    c.append(h);
+    const d=new Date(ss.date);
+    const meta=el("div","meta");meta.textContent=d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})+" · "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+    c.append(meta);
+    ss.entries.forEach(en=>{
+      const done=en.sets.filter(s=>s.w!=null||s.r!=null);
+      if(!done.length)return;
+      const line=el("div","line");
+      const txt=done.map(s=>{
+        const amt = en.metric==="time" ? (s.r!=null?s.r+"s":"—") : (s.r!=null?s.r:"—");
+        return s.w!=null ? s.w+"×"+amt : amt;
+      }).join("  ");
+      line.innerHTML="<b>"+en.exercise+"</b> — "+txt;
+      c.append(line);
+    });
+    v.append(c);
+  });
+}
+
+/* ============================================================
+   SWAP
+   ============================================================ */
+let swapTarget=null;
+function openSwap(ei){
+  swapTarget=ei;
+  const ex=exOf(viewKey)[ei];
+  $("#swapTitle").textContent="Swap: "+ex.n;
+  const box=$("#swapOpts");box.innerHTML="";
+  const pool=[...PLAN[viewKey].ex.map(e=>e.n), ...(SWAP[PLAN[viewKey].group]||[])]
+    .filter((n,i,a)=>a.indexOf(n)===i && n!==ex.n);
+  pool.forEach(n=>{
+    const b=el("button","swap-opt");b.textContent=n;
+    b.onclick=()=>{
+      overrides[viewKey]={...(overrides[viewKey]||{}),[ei]:n};
+      write(LS.overrides,overrides);
+      $("#swapDlg").close();renderTrain();
+    };
+    box.append(b);
+  });
+  $("#swapDlg").showModal();
+}
+$("#swapCancel").onclick=()=>$("#swapDlg").close();
+
+/* ============================================================
+   SAVE + SYNC
+   ============================================================ */
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
+
+async function pushSession(ss){
+  if(!endpoint) return false;
+  try{
+    // String body => text/plain (a "simple" request) => no CORS preflight,
+    // which keeps it working with Apps Script, Forms proxies, SheetDB, Sheety, etc.
+    await fetch(endpoint,{method:"POST",body:JSON.stringify(ss)});
+    return true;
+  }catch(e){return false;}
+}
+
+async function finish(){
+  const {any,entries}=collectDraft();
+  if(!any){toast("Log at least one set first");return;}
+  const ss={
+    id:Date.now(), date:new Date().toISOString(),
+    session:viewKey, entries, note:"", synced:false
+  };
+  sessions.push(ss);
+  // advance rotation only when the due session was completed
+  if(viewKey===ORDER[rotIdx%3]) rotIdx=(rotIdx+1)%3;
+  write(LS.sessions,sessions);write(LS.idx,rotIdx);
+  if(endpoint){ ss.synced=await pushSession(ss); write(LS.sessions,sessions); }
+  toast(ss.synced?"Logged & synced":"Logged"+(endpoint?" (sync failed — saved local)":""));
+  draft={};viewKey=ORDER[rotIdx%3];renderHeader();renderTrain();
+}
+$("#finishBtn").onclick=finish;
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+$("#url").value=endpoint;
+$("#saveUrl").onclick=()=>{endpoint=$("#url").value.trim();write(LS.url,endpoint);toast("Endpoint saved");renderHistory();};
+$("#syncAll").onclick=async()=>{
+  if(!endpoint){toast("Add an endpoint first");return;}
+  let n=0;
+  for(const ss of sessions){ if(!ss.synced){ if(await pushSession(ss)){ss.synced=true;n++;} } }
+  write(LS.sessions,sessions);renderHistory();toast(n?`Synced ${n}`:"Nothing to sync");
+};
+$("#exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify({sessions,rotIdx,overrides},null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="workout-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();
+};
+$("#resetBtn").onclick=()=>{
+  if(!confirm("Clear all logged sessions on this device? Export a backup first if unsure."))return;
+  sessions=[];rotIdx=0;overrides={};
+  write(LS.sessions,sessions);write(LS.idx,rotIdx);write(LS.overrides,overrides);
+  viewKey=ORDER[0];renderHeader();renderTrain();renderHistory();toast("Cleared");
+};
+$("#verNote").textContent="Local-first · "+(sessions.length)+" session(s) stored on this device.";
+
+/* ============================================================
+   NAV
+   ============================================================ */
+$("#nav").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  [...$("#nav").children].forEach(x=>x.classList.toggle("sel",x===b));
+  const v=b.dataset.view;
+  $("#view-train").classList.toggle("hidden",v!=="train");
+  $("#view-history").classList.toggle("hidden",v!=="history");
+  $("#view-settings").classList.toggle("hidden",v!=="settings");
+  $("#finishWrap").style.display = v==="train" ? "" : "none";
+  if(v==="history")renderHistory();
+  if(v==="settings")$("#verNote").textContent="Local-first · "+(sessions.length)+" session(s) stored on this device.";
+});
+
+/* init */
+renderHeader();renderTrain();
+</script>
+</body>
+</html>
