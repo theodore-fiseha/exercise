@@ -246,9 +246,9 @@ const LIB=[
 ];
 const SEED_IMG={gsquat:"https://ca.ironbullstrength.com/cdn/shop/articles/ea15b7b44c2032cfeae6685e160bc02e_e0953f5b-a684-43fa-a0e3-646dc4de0f04.jpg?v=1779808972"};
 const DEFAULT_SLOTS={
- A:["gsquat","incdb","pull","ohp","dbrow","curl","push","hlr"],
- B:["rdl","flatdb","row","lat","face","hammer","ohext","plank"],
- C:["lunge","dips","pull","pike","calf","inccurl","skull","twist"],
+ A:["gsquat","hip","incdb","pushup","ohp","front","pull","curl","preach","push","hlr","crunch"],
+ B:["rdl","bss","flatdb","flye","lat","revflye","row","face","hammer","ohext","bench","plank","farmer"],
+ C:["lunge","calf","dips","pike","dbrow","shrug","inccurl","skull","kick","twist"],
 };
 const CATS=["Legs","Chest","Shoulders","Back","Biceps","Triceps","Core"];
 const COVER=["Legs","Chest","Back","Shoulders","Arms","Core"];
@@ -267,7 +267,7 @@ function normEx(e){
 }
 
 /* ===== storage ===== */
-const LS={catalog:"rot5.catalog",sessions:"rot5.sessions",url:"rot5.url",outbox:"rot5.outbox"};
+const LS={catalog:"rot6.catalog",sessions:"rot6.sessions",url:"rot6.url",outbox:"rot6.outbox"};
 const read=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}};
 const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 let catalog=read(LS.catalog,null); if(!catalog){catalog=seedCatalog();write(LS.catalog,catalog);}
@@ -320,8 +320,7 @@ async function flush(){
  try{
   while(outbox.length){
    const op=outbox[0];
-   const res=await apiPost(op);
-   if(res&&res.state)applyRemote(res.state,{fromWrite:true});
+   await apiPost(op); /* don't re-apply the server echo mid-edit — pull() reconciles */
    outbox.shift();write(LS.outbox,outbox);
   }
   setChip("synced","synced");
@@ -485,11 +484,17 @@ function renderPlan(){
    const nm=el("div","nm");nm.innerHTML="<div class='t'>"+ex.n+"</div><div class='s'>"+ex.sub+"</div>";
    const chips=el("div","slotchips");
    ORDER.forEach(k=>{
-    const on=ex.slots.includes(k);const ch=el("button","chipbtn"+(on?" on":""));ch.textContent=k;
+    const cur=byId(ex.id)||ex;
+    const ch=el("button","chipbtn"+(cur.slots.includes(k)?" on":""));ch.textContent=k;
     ch.onclick=()=>{
-     const i=ex.slots.indexOf(k);if(i>=0)ex.slots.splice(i,1);else ex.slots.push(k);
-     ch.classList.toggle("on");saveExercise(ex);
-     if(k===viewKey){initDraft();renderTrain();}renderHeader();
+     const e=byId(ex.id);if(!e)return;
+     const i=e.slots.indexOf(k);
+     if(i>=0)e.slots.splice(i,1);else e.slots.push(k);
+     const nowOn=e.slots.includes(k);
+     ch.classList.toggle("on",nowOn);
+     saveExercise(e);
+     renderHeader();
+     if(k===viewKey){initDraft();renderTrain();}
     };
     chips.append(ch);
    });
@@ -565,7 +570,7 @@ $("#nav").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)
  ["train","history","plan","settings"].forEach(k=>$("#view-"+k).classList.toggle("hidden",k!==view));
  $("#finishWrap").style.display=view==="train"?"":"none";
  if(view==="history"){renderHistory();pull();}
- if(view==="plan"){renderPlan();pull();}
+ if(view==="plan"){renderPlan();}
  if(view==="settings"){renderManager();$("#verNote").textContent=(outbox.length?outbox.length+" change(s) waiting to sync · ":"")+catalog.length+" exercises cached.";}});
 
 window.addEventListener("online",()=>{if(endpoint){setChip("saving","reconnecting…");flush();}});
