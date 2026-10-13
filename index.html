@@ -110,6 +110,22 @@
   .slotchips{display:flex;gap:5px}
   .chipbtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-faint);font-family:"Barlow Condensed";font-weight:700;font-size:16px}
   .chipbtn.on{background:var(--brass);border-color:var(--brass);color:#241900}
+  .planseltabs{display:flex;gap:7px;margin-top:14px}
+  .pseltab{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 0 7px;display:flex;flex-direction:column;align-items:center;gap:1px}
+  .pseltab span{font-family:"Barlow Condensed";font-weight:700;font-size:20px;line-height:1;color:var(--ink-dim)}
+  .pseltab small{font-size:11px;color:var(--ink-faint)}
+  .pseltab.sel{background:var(--surface-2);border-color:var(--brass)}
+  .pseltab.sel span{color:var(--brass)}
+  .ord-row{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:7px}
+  .arrows{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}
+  .arr{width:32px;height:23px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:7px;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0}
+  .arr:disabled{opacity:.3}
+  .pos{width:18px;text-align:center;color:var(--ink-faint);font-weight:700;font-size:16px;font-family:"Barlow Condensed";flex:0 0 auto}
+  .ord-row .nm{flex:1;min-width:0}
+  .ord-row .nm .t{font-weight:600;font-size:15px}
+  .ord-row .nm .s{font-size:11px;color:var(--ink-faint)}
+  .ord-row .x{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--danger);flex:0 0 auto}
+  .addbtn{flex:0 0 auto;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:9px 13px;font-weight:600;font-size:13px}
 
   .set-block{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-top:11px}
   .set-block label{display:block;font-weight:600;margin-bottom:4px}
@@ -160,7 +176,7 @@
   <section id="view-train"><div id="exList"></div></section>
   <section id="view-history" class="hidden"></section>
   <section id="view-plan" class="hidden">
-    <p class="muted" style="margin:12px 0 0;text-align:left">Tap A / B / C to set which sessions an exercise appears in. Changes save to your Sheet as you go.</p>
+    <p class="muted" style="margin:12px 0 0;text-align:left">Pick a session, then use ▲ ▼ to set the order exercises run in, or add / remove them. An exercise can live in more than one session. Changes save to your Sheet.</p>
     <div id="libList"></div>
   </section>
   <section id="view-settings" class="hidden">
@@ -254,16 +270,21 @@ const CATS=["Legs","Chest","Shoulders","Back","Biceps","Triceps","Core"];
 const COVER=["Legs","Chest","Back","Shoulders","Arms","Core"];
 const ORDER=["A","B","C"];
 function seedCatalog(){
- return LIB.map(e=>({
-  id:e.id,n:e.n,cat:e.cat,sub:e.sub,sets:e.sets,reps:e.reps,metric:e.metric||"reps",bw:!!e.bw,
-  slots:ORDER.filter(k=>DEFAULT_SLOTS[k].includes(e.id)),
-  image:SEED_IMG[e.id]||""
- }));
+ return LIB.map(e=>{
+  const slots=ORDER.filter(k=>DEFAULT_SLOTS[k].includes(e.id));
+  const ord={};slots.forEach(k=>ord[k]=DEFAULT_SLOTS[k].indexOf(e.id));
+  return {id:e.id,n:e.n,cat:e.cat,sub:e.sub,sets:e.sets,reps:e.reps,metric:e.metric||"reps",bw:!!e.bw,
+   slots:slots,ord:ord,image:SEED_IMG[e.id]||""};
+ });
 }
 function normEx(e){
+ const slots=Array.isArray(e.slots)?e.slots.filter(k=>ORDER.includes(k)):[];
+ const ord={};
+ if(e.ord&&typeof e.ord==="object"){ORDER.forEach(k=>{const v=Number(e.ord[k]);if(e.ord[k]!=null&&!isNaN(v))ord[k]=v;});}
+ slots.forEach((k,i)=>{if(ord[k]==null)ord[k]=i;});
  return {id:String(e.id),n:String(e.n||""),cat:String(e.cat||"Core"),sub:String(e.sub||e.cat||""),
   sets:Number(e.sets)||3,reps:Number(e.reps)||10,metric:(e.metric==="time"?"time":"reps"),bw:!!e.bw,
-  slots:Array.isArray(e.slots)?e.slots.filter(k=>ORDER.includes(k)):[],image:String(e.image||"")};
+  slots:slots,ord:ord,image:String(e.image||"")};
 }
 
 /* ===== storage ===== */
@@ -278,13 +299,16 @@ let outbox=read(LS.outbox,[]);
 let rotIdx=0; /* derived from sessions */
 let viewKey="A";
 let view="train";
+let planSlot="A";
 let draft={};
 let syncing=false;
 
 const $=s=>document.querySelector(s);
 const el=(t,c)=>{const n=document.createElement(t);if(c)n.className=c;return n;};
 const byId=id=>catalog.find(e=>e.id===id);
-const slotEx=k=>catalog.filter(e=>e.slots.includes(k));
+const ordOf=(e,k)=>(e.ord&&e.ord[k]!=null)?e.ord[k]:1e9;
+const slotOrdered=k=>catalog.filter(e=>e.slots.includes(k)).sort((a,b)=>ordOf(a,k)-ordOf(b,k)||a.n.localeCompare(b.n));
+const slotEx=slotOrdered;
 function coverOf(k){const c=new Set(slotEx(k).map(e=>e.cat));
  return COVER.filter(m=>m==="Arms"?(c.has("Biceps")||c.has("Triceps")):c.has(m));}
 function lastFor(id){for(let i=sessions.length-1;i>=0;i--){const h=(sessions[i].entries||[]).find(e=>e.id===id);if(h)return h.sets;}return null;}
@@ -294,7 +318,7 @@ function recomputeRot(){ // next session = one after the last logged
  const last=sessions[sessions.length-1].session;const i=ORDER.indexOf(last);
  rotIdx=i<0?0:(i+1)%3;
 }
-recomputeRot(); viewKey=ORDER[rotIdx%3];
+recomputeRot(); viewKey=ORDER[rotIdx%3]; planSlot=viewKey;
 
 /* ===== sync engine (Apps Script endpoint) ===== */
 function setChip(state,label){
@@ -474,34 +498,65 @@ function thumbEl(ex,size){
  if(src){const im=el("img");im.src=src;im.alt="";im.onerror=()=>{t.textContent="?";};t.append(im);}else t.textContent="—";
  return t;
 }
+function reindexSlot(k){ slotOrdered(k).forEach((e,i)=>{if(!e.ord)e.ord={};if(e.ord[k]!==i){e.ord[k]=i;saveExercise(e);}}); }
+function moveInSlot(k,id,dir){
+ reindexSlot(k);
+ const list=slotOrdered(k);const idx=list.findIndex(e=>e.id===id);const j=idx+dir;
+ if(idx<0||j<0||j>=list.length)return;
+ const a=byId(id),b=byId(list[j].id);
+ const t=a.ord[k];a.ord[k]=b.ord[k];b.ord[k]=t;
+ saveExercise(a);saveExercise(b);
+}
+function toggleSlot(id,k,on){
+ const e=byId(id);if(!e)return;
+ const i=e.slots.indexOf(k);
+ if(on&&i<0){ if(!e.ord)e.ord={}; e.ord[k]=slotOrdered(k).length; e.slots.push(k); }
+ else if(!on&&i>=0){ e.slots.splice(i,1); if(e.ord)delete e.ord[k]; }
+ saveExercise(e);
+}
+function afterPlan(){ renderPlan(); renderHeader(); if(planSlot===viewKey){initDraft();renderTrain();} }
 function renderPlan(){
  const v=$("#libList");v.innerHTML="";
- CATS.forEach(cat=>{
-  const items=catalog.filter(e=>e.cat===cat);if(!items.length)return;
-  const g=el("div","grp");const h=el("h4");h.textContent=cat;g.append(h);
-  items.forEach(ex=>{
-   const row=el("div","lib");
-   const nm=el("div","nm");nm.innerHTML="<div class='t'>"+ex.n+"</div><div class='s'>"+ex.sub+"</div>";
-   const chips=el("div","slotchips");
-   ORDER.forEach(k=>{
-    const cur=byId(ex.id)||ex;
-    const ch=el("button","chipbtn"+(cur.slots.includes(k)?" on":""));ch.textContent=k;
-    ch.onclick=()=>{
-     const e=byId(ex.id);if(!e)return;
-     const i=e.slots.indexOf(k);
-     if(i>=0)e.slots.splice(i,1);else e.slots.push(k);
-     const nowOn=e.slots.includes(k);
-     ch.classList.toggle("on",nowOn);
-     saveExercise(e);
-     renderHeader();
-     if(k===viewKey){initDraft();renderTrain();}
-    };
-    chips.append(ch);
-   });
-   row.append(thumbEl(ex,40),nm,chips);g.append(row);
-  });
-  v.append(g);
+ const tabs=el("div","planseltabs");
+ ORDER.forEach(k=>{
+  const b=el("button","pseltab"+(k===planSlot?" sel":""));
+  b.innerHTML="<span>"+k+"</span><small>"+slotOrdered(k).length+" exercises</small>";
+  b.onclick=()=>{planSlot=k;renderPlan();};
+  tabs.append(b);
  });
+ v.append(tabs);
+
+ const g=el("div","grp");const h=el("h4");h.textContent="Order for session "+planSlot+" — top comes first";g.append(h);
+ const members=slotOrdered(planSlot);
+ if(!members.length){const e=el("div","empty");e.style.padding="18px 10px";e.textContent="Nothing in "+planSlot+" yet — add from the list below.";g.append(e);}
+ members.forEach((ex,i)=>{
+  const row=el("div","ord-row");
+  const ar=el("div","arrows");
+  const up=el("button","arr");up.textContent="▲";up.disabled=i===0;up.onclick=()=>{moveInSlot(planSlot,ex.id,-1);afterPlan();};
+  const dn=el("button","arr");dn.textContent="▼";dn.disabled=i===members.length-1;dn.onclick=()=>{moveInSlot(planSlot,ex.id,1);afterPlan();};
+  ar.append(up,dn);
+  const pos=el("div","pos");pos.textContent=i+1;
+  const nm=el("div","nm");nm.innerHTML="<div class='t'>"+ex.n+"</div><div class='s'>"+ex.cat+" · "+ex.sub+"</div>";
+  const x=el("button","x");x.textContent="×";x.title="Remove from "+planSlot;
+  x.onclick=()=>{toggleSlot(ex.id,planSlot,false);afterPlan();};
+  row.append(ar,pos,thumbEl(ex,40),nm,x);g.append(row);
+ });
+ v.append(g);
+
+ const non=catalog.filter(e=>!e.slots.includes(planSlot));
+ if(non.length){
+  const ag=el("div","grp");const ah=el("h4");ah.textContent="Add to session "+planSlot;ag.append(ah);
+  CATS.forEach(cat=>{
+   non.filter(e=>e.cat===cat).forEach(ex=>{
+    const row=el("div","lib");
+    const nm=el("div","nm");nm.innerHTML="<div class='t'>"+ex.n+"</div><div class='s'>"+ex.cat+" · "+ex.sub+"</div>";
+    const add=el("button","addbtn");add.textContent="+ add";
+    add.onclick=()=>{toggleSlot(ex.id,planSlot,true);afterPlan();};
+    row.append(thumbEl(ex,40),nm,add);ag.append(row);
+   });
+  });
+  v.append(ag);
+ }
 }
 
 /* ===== settings: exercise CRUD ===== */
