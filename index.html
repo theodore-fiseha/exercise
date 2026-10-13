@@ -12,7 +12,7 @@
     --bg:#101218; --surface:#191c23; --surface-2:#20242d; --surface-3:#272c37;
     --line:#2c313c; --line-2:#394050;
     --ink:#f3f1ea; --ink-dim:#9aa2af; --ink-faint:#5b6372;
-    --brass:#e7b43f; --brass-deep:#b98a1f; --steel:#58b2cc; --danger:#d76a4f;
+    --brass:#e7b43f; --brass-deep:#b98a1f; --steel:#58b2cc; --danger:#d76a4f; --ok:#6fcf97;
     --r:14px;
     box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   }
@@ -28,21 +28,28 @@
   input,select{font-family:inherit;font-size:16px}
   .wrap{max-width:560px;margin:0 auto;padding:0 14px 130px}
 
-  header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:linear-gradient(var(--bg) 72%,rgba(16,18,24,0));padding:16px 0 8px}
+  header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:linear-gradient(var(--bg) 72%,rgba(16,18,24,0));padding:14px 0 8px}
+  .statusbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:30px;border:1px solid var(--line);color:var(--ink-faint);background:var(--surface)}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint)}
+  .chip.synced{color:var(--ok);border-color:rgba(111,207,151,.4)}.chip.synced .dot{background:var(--ok)}
+  .chip.saving{color:var(--brass);border-color:rgba(231,180,63,.4)}.chip.saving .dot{background:var(--brass);animation:pulse 1s infinite}
+  .chip.offline{color:var(--danger);border-color:rgba(215,106,79,.4)}.chip.offline .dot{background:var(--danger)}
+  @keyframes pulse{50%{opacity:.3}}
   .hrow{display:flex;align-items:center;gap:15px}
-  .plate{width:66px;height:66px;flex:0 0 auto;border-radius:50%;
+  .plate{width:62px;height:62px;flex:0 0 auto;border-radius:50%;
     background:radial-gradient(circle at 32% 28%,#f3c659,var(--brass) 45%,var(--brass-deep));
-    display:flex;align-items:center;justify-content:center;color:#241900;font-family:"Barlow Condensed";font-weight:700;font-size:40px;line-height:1;
-    box-shadow:inset 0 0 0 4px rgba(0,0,0,.18),inset 0 0 0 10px rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.4)}
+    display:flex;align-items:center;justify-content:center;color:#241900;font-family:"Barlow Condensed";font-weight:700;font-size:38px;line-height:1;
+    box-shadow:inset 0 0 0 4px rgba(0,0,0,.18),inset 0 0 0 9px rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.4)}
   .htext{flex:1;min-width:0}
   .htext .kick{color:var(--brass);font-weight:600;font-size:13px}
-  .htext h1{margin:1px 0 0;font-size:27px;font-weight:600;line-height:1;font-family:"Barlow Condensed"}
+  .htext h1{margin:1px 0 0;font-size:26px;font-weight:600;line-height:1;font-family:"Barlow Condensed"}
   .htext p{margin:2px 0 0;color:var(--ink-dim);font-size:14px}
-  .cover{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .cover{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
   .tag{font-size:12px;padding:4px 10px;border-radius:30px;border:1px solid var(--line);color:var(--ink-faint);background:var(--surface)}
   .tag.lit{color:var(--ink);border-color:var(--line-2);background:var(--surface-2)}
   .tag.lit::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--brass);margin-right:6px;vertical-align:middle}
-  .switch{display:flex;gap:7px;margin-top:13px}
+  .switch{display:flex;gap:7px;margin-top:12px}
   .switch button{flex:1;background:var(--surface);border:1px solid var(--line);padding:9px 0 7px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:1px}
   .switch button .l{font-family:"Barlow Condensed";font-weight:700;font-size:20px;color:var(--ink-dim);line-height:1}
   .switch button .t{font-size:11px;color:var(--ink-faint)}
@@ -65,7 +72,6 @@
   .ex-name{font-family:"Barlow Condensed";font-weight:600;font-size:22px;line-height:1.03}
   .ex-sub{color:var(--ink-faint);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ex-musc{flex:0 0 auto;font-size:11px;color:var(--ink-dim);background:var(--surface-2);border:1px solid var(--line);border-radius:30px;padding:3px 9px}
-
   .cols{display:grid;grid-template-columns:46px 1fr 1fr;gap:9px;margin:12px 0 3px;color:var(--ink-faint);font-size:11px}
   .cols span{text-align:center}
   .setrow{display:grid;grid-template-columns:46px 1fr 1fr;gap:9px;margin-bottom:8px}
@@ -92,8 +98,6 @@
   .hist .meta{color:var(--ink-dim);font-size:13px;margin:2px 0 9px}
   .hist .line{font-size:14px;color:var(--ink-dim);padding:4px 0;border-top:1px solid var(--line)}
   .hist .line b{color:var(--ink);font-weight:600}
-  .pill{font-size:11px;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--ink-faint)}
-  .pill.ok{color:var(--steel);border-color:var(--steel)}
 
   .grp{margin-top:16px}
   .grp h4{font-family:"Barlow Condensed";font-size:15px;color:var(--ink-dim);margin:0 0 7px;font-weight:600}
@@ -104,8 +108,8 @@
   .thumb{width:46px;height:46px;flex:0 0 auto;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--ink-faint);font-size:10px}
   .thumb img{width:100%;height:100%;object-fit:cover}
   .slotchips{display:flex;gap:5px}
-  .chip{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-faint);font-family:"Barlow Condensed";font-weight:700;font-size:16px}
-  .chip.on{background:var(--brass);border-color:var(--brass);color:#241900}
+  .chipbtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-faint);font-family:"Barlow Condensed";font-weight:700;font-size:16px}
+  .chipbtn.on{background:var(--brass);border-color:var(--brass);color:#241900}
 
   .set-block{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-top:11px}
   .set-block label{display:block;font-weight:600;margin-bottom:4px}
@@ -118,13 +122,15 @@
   .row2{display:flex;gap:8px;margin-top:4px}
   .row2 button{flex:1;background:var(--surface-2);border:1px solid var(--line);padding:12px;border-radius:9px;font-weight:600}
   .btn-accent{background:var(--brass)!important;border-color:var(--brass)!important;color:#241900!important}
-  .mgr-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 10px;margin-bottom:7px}
+  .mgr-row{display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 10px;margin-bottom:7px}
   .mgr-row .prev{width:52px;height:52px;flex:0 0 auto;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--ink-faint);font-size:9px;text-align:center}
   .mgr-row .prev img{width:100%;height:100%;object-fit:cover}
   .mgr-row .u{flex:1;min-width:0}
-  .mgr-row .u .t{font-weight:600;font-size:14px;margin-bottom:5px}
-  .mgr-row .u input{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px;font-size:13px}
-  .mgr-row .x{flex:0 0 auto;width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-faint)}
+  .mgr-row .u input{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px;font-size:13px;margin-bottom:5px}
+  .mgr-row .u input.nm{font-weight:600;font-size:14px}
+  .mgr-row .x{flex:0 0 auto;width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--danger)}
+  .status-line{font-size:13px;margin:0 0 10px;color:var(--ink-dim)}
+  .status-line b{color:var(--ink)}
   .muted{color:var(--ink-faint);font-size:12px;margin-top:15px;text-align:center}
   .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(18px);background:var(--steel);color:#06222b;padding:11px 20px;border-radius:30px;font-weight:600;opacity:0;transition:.25s;z-index:40;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -135,6 +141,7 @@
 <body>
 <div class="wrap">
   <header>
+    <div class="statusbar"><span class="chip" id="chip"><span class="dot"></span><span id="chipText">local only</span></span></div>
     <div class="hrow">
       <div class="plate display" id="plate">A</div>
       <div class="htext"><div class="kick" id="kick">Session A</div><h1 id="sessTitle">Full body</h1><p id="sessSub"></p></div>
@@ -153,13 +160,21 @@
   <section id="view-train"><div id="exList"></div></section>
   <section id="view-history" class="hidden"></section>
   <section id="view-plan" class="hidden">
-    <p class="muted" style="margin:12px 0 0;text-align:left">Tap A / B / C to set which sessions an exercise appears in. Each session stays full-body; staples can live on more than one slot.</p>
+    <p class="muted" style="margin:12px 0 0;text-align:left">Tap A / B / C to set which sessions an exercise appears in. Changes save to your Sheet as you go.</p>
     <div id="libList"></div>
   </section>
   <section id="view-settings" class="hidden">
     <div class="set-block">
+      <label>Google Sheet connection</label>
+      <p>Paste the Apps Script Web App URL (ends in <b>/exec</b>). Everything — exercises, images, slots, and logged sessions — reads from and writes to your Sheet. See the setup notes you were given.</p>
+      <input class="fld" type="url" id="url" placeholder="https://script.google.com/macros/s/…/exec" inputmode="url" />
+      <p class="status-line" id="connStatus">Status: <b>not connected</b></p>
+      <div class="row2"><button class="btn-accent" id="connect">Connect &amp; sync</button><button id="refresh">Refresh from Sheet</button></div>
+      <div class="row2"><button id="pushAll">Push everything to Sheet</button></div>
+    </div>
+    <div class="set-block">
       <label>Add an exercise</label>
-      <p>New exercises appear in the Plan tab, ready to assign to A / B / C.</p>
+      <p>Saved straight to the Sheet, then assign it to A / B / C in the Plan tab.</p>
       <input class="fld" id="nx-name" placeholder="Exercise name" />
       <div class="frow">
         <select class="fld" id="nx-cat"></select>
@@ -174,20 +189,14 @@
       <div class="row2"><button class="btn-accent" id="nx-add">Add exercise</button></div>
     </div>
     <div class="set-block">
-      <label>Exercise images</label>
-      <p>Each exercise and the image link it uses. Paste or edit a link to change what shows on the card; clear it to leave the card without an image.</p>
+      <label>Exercises</label>
+      <p>Edit a name or image link, or delete an exercise. Each change writes to the Sheet.</p>
       <div id="mgr"></div>
     </div>
     <div class="set-block">
-      <label>Google Sheet sync endpoint</label>
-      <p>Paste the URL that receives a finished session. Leave blank to stay on this device.</p>
-      <input class="fld" type="url" id="url" placeholder="https://…" inputmode="url" style="margin-bottom:0" />
-      <div class="row2"><button id="saveUrl">Save endpoint</button><button id="syncAll">Sync unsynced</button></div>
-    </div>
-    <div class="set-block">
-      <label>Your data</label>
-      <p>Everything lives in this browser until you sync.</p>
-      <div class="row2"><button id="exportBtn">Export backup</button><button id="resetBtn" style="color:var(--danger);border-color:var(--danger)">Clear all</button></div>
+      <label>Local data</label>
+      <p>A cached copy is kept on this device so the app works offline; it syncs when you reconnect.</p>
+      <div class="row2"><button id="exportBtn">Export backup</button><button id="resetBtn" style="color:var(--danger);border-color:var(--danger)">Reset device cache</button></div>
     </div>
     <p class="muted" id="verNote"></p>
   </section>
@@ -197,7 +206,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ===== base library ===== */
+/* ===== seed catalog (first run only; after that the Sheet / cache is the source) ===== */
 const LIB=[
  {id:"gsquat",n:"Goblet Squats",cat:"Legs",sub:"Quads · glutes",sets:3,reps:10},
  {id:"rdl",n:"Romanian Deadlifts",cat:"Legs",sub:"Hamstrings · glutes",sets:3,reps:10},
@@ -235,44 +244,123 @@ const LIB=[
  {id:"crunch",n:"Cable Crunches",cat:"Core",sub:"Abs",sets:3,reps:15},
  {id:"farmer",n:"Farmer's Carries",cat:"Core",sub:"Grip · core",sets:3,reps:40,metric:"time"},
 ];
-/* seeded "how it's performed" image links — edit any of these in Settings.
-   Only goblet squat is pre-filled; add links for the rest in Settings as you go. */
-const SEED={
- gsquat:"https://ca.ironbullstrength.com/cdn/shop/articles/ea15b7b44c2032cfeae6685e160bc02e_e0953f5b-a684-43fa-a0e3-646dc4de0f04.jpg?v=1779808972",
-};
-const CATS=["Legs","Chest","Shoulders","Back","Biceps","Triceps","Core"];
-const COVER=["Legs","Chest","Back","Shoulders","Arms","Core"];
-const ORDER=["A","B","C"];
+const SEED_IMG={gsquat:"https://ca.ironbullstrength.com/cdn/shop/articles/ea15b7b44c2032cfeae6685e160bc02e_e0953f5b-a684-43fa-a0e3-646dc4de0f04.jpg?v=1779808972"};
 const DEFAULT_SLOTS={
  A:["gsquat","incdb","pull","ohp","dbrow","curl","push","hlr"],
  B:["rdl","flatdb","row","lat","face","hammer","ohext","plank"],
  C:["lunge","dips","pull","pike","calf","inccurl","skull","twist"],
 };
+const CATS=["Legs","Chest","Shoulders","Back","Biceps","Triceps","Core"];
+const COVER=["Legs","Chest","Back","Shoulders","Arms","Core"];
+const ORDER=["A","B","C"];
+function seedCatalog(){
+ return LIB.map(e=>({
+  id:e.id,n:e.n,cat:e.cat,sub:e.sub,sets:e.sets,reps:e.reps,metric:e.metric||"reps",bw:!!e.bw,
+  slots:ORDER.filter(k=>DEFAULT_SLOTS[k].includes(e.id)),
+  image:SEED_IMG[e.id]||""
+ }));
+}
+function normEx(e){
+ return {id:String(e.id),n:String(e.n||""),cat:String(e.cat||"Core"),sub:String(e.sub||e.cat||""),
+  sets:Number(e.sets)||3,reps:Number(e.reps)||10,metric:(e.metric==="time"?"time":"reps"),bw:!!e.bw,
+  slots:Array.isArray(e.slots)?e.slots.filter(k=>ORDER.includes(k)):[],image:String(e.image||"")};
+}
 
 /* ===== storage ===== */
-const LS={sessions:"rot4.sessions",idx:"rot4.idx",url:"rot4.url",slots:"rot4.slots",img:"rot4.img",userex:"rot4.userex"};
+const LS={catalog:"rot5.catalog",sessions:"rot5.sessions",url:"rot5.url",outbox:"rot5.outbox"};
 const read=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}};
 const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+let catalog=read(LS.catalog,null); if(!catalog){catalog=seedCatalog();write(LS.catalog,catalog);}
+catalog=catalog.map(normEx);
 let sessions=read(LS.sessions,[]);
-let rotIdx=read(LS.idx,0);
 let endpoint=read(LS.url,"");
-let slots=read(LS.slots,null)||JSON.parse(JSON.stringify(DEFAULT_SLOTS));
-let imgMap=read(LS.img,{});
-let userEx=read(LS.userex,[]);
-let viewKey=ORDER[rotIdx%3];
+let outbox=read(LS.outbox,[]);
+let rotIdx=0; /* derived from sessions */
+let viewKey="A";
+let view="train";
 let draft={};
+let syncing=false;
 
 const $=s=>document.querySelector(s);
 const el=(t,c)=>{const n=document.createElement(t);if(c)n.className=c;return n;};
-const allEx=()=>[...LIB,...userEx];
-const byId=id=>allEx().find(e=>e.id===id);
-const slotEx=k=>(slots[k]||[]).map(byId).filter(Boolean);
+const byId=id=>catalog.find(e=>e.id===id);
+const slotEx=k=>catalog.filter(e=>e.slots.includes(k));
 function coverOf(k){const c=new Set(slotEx(k).map(e=>e.cat));
  return COVER.filter(m=>m==="Arms"?(c.has("Biceps")||c.has("Triceps")):c.has(m));}
-function lastFor(id){for(let i=sessions.length-1;i>=0;i--){const h=sessions[i].entries.find(e=>e.id===id);if(h)return h.sets;}return null;}
+function lastFor(id){for(let i=sessions.length-1;i>=0;i--){const h=(sessions[i].entries||[]).find(e=>e.id===id);if(h)return h.sets;}return null;}
+const imgFor=ex=>ex.image||"";
+function recomputeRot(){ // next session = one after the last logged
+ if(!sessions.length){rotIdx=0;return;}
+ const last=sessions[sessions.length-1].session;const i=ORDER.indexOf(last);
+ rotIdx=i<0?0:(i+1)%3;
+}
+recomputeRot(); viewKey=ORDER[rotIdx%3];
 
-/* image link for an exercise: user override wins, else seed, else none */
-const imgFor=ex=>(ex.id in imgMap)?imgMap[ex.id]:(SEED[ex.id]||"");
+/* ===== sync engine (Apps Script endpoint) ===== */
+function setChip(state,label){
+ const c=$("#chip");c.className="chip "+(state||"");
+ $("#chipText").textContent=label||state||"";
+}
+async function apiGet(){
+ const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),12000);
+ try{const r=await fetch(endpoint,{signal:ctrl.signal});return await r.json();}finally{clearTimeout(to);}
+}
+async function apiPost(body){
+ const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),12000);
+ try{const r=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body),signal:ctrl.signal});return await r.json();}finally{clearTimeout(to);}
+}
+function queueOp(op){
+ outbox.push(op);write(LS.outbox,outbox);
+ if(!endpoint){setChip("","local only");return;}
+ setChip("saving","saving…");flush();
+}
+async function flush(){
+ if(!endpoint||syncing||!outbox.length)return;
+ syncing=true;
+ try{
+  while(outbox.length){
+   const op=outbox[0];
+   const res=await apiPost(op);
+   if(res&&res.state)applyRemote(res.state,{fromWrite:true});
+   outbox.shift();write(LS.outbox,outbox);
+  }
+  setChip("synced","synced");
+ }catch(e){ setChip("offline","offline — will retry"); }
+ finally{ syncing=false; }
+}
+function applyRemote(state,opts){
+ opts=opts||{};
+ if(state&&Array.isArray(state.exercises)&&state.exercises.length){catalog=state.exercises.map(normEx);write(LS.catalog,catalog);}
+ if(state&&Array.isArray(state.sessions)){sessions=state.sessions;write(LS.sessions,sessions);}
+ recomputeRot();
+ if(view!=="train"||opts.hard){viewKey=ORDER[rotIdx%3];}
+ renderHeader();
+ if(view==="history")renderHistory();
+ else if(view==="plan")renderPlan();
+ else if(view==="settings")renderManager();
+ else if(opts.hard){initDraft();renderTrain();}
+}
+async function connect(){
+ endpoint=$("#url").value.trim();write(LS.url,endpoint);
+ if(!endpoint){setChip("","local only");$("#connStatus").innerHTML="Status: <b>not connected</b>";return;}
+ setChip("saving","connecting…");$("#connStatus").innerHTML="Status: <b>connecting…</b>";
+ try{
+  let st=await apiGet();
+  if(!st||!Array.isArray(st.exercises)||!st.exercises.length){
+   await apiPost({action:"replaceCatalog",exercises:catalog}); // seed the empty sheet from current catalog
+   st=await apiGet();
+  }
+  applyRemote(st,{hard:true});
+  await flush();
+  setChip("synced","synced");$("#connStatus").innerHTML="Status: <b>connected</b> — synced with your Sheet";
+  toast("Connected");
+ }catch(e){ setChip("offline","offline"); $("#connStatus").innerHTML="Status: <b>couldn’t reach the Sheet</b> — check the URL and that access is set to “Anyone”"; }
+}
+async function pull(){
+ if(!endpoint)return;
+ try{ const st=await apiGet(); applyRemote(st,{}); setChip("synced","synced"); }
+ catch(e){ setChip("offline","offline"); }
+}
 
 /* ===== header ===== */
 function renderHeader(){
@@ -306,7 +394,6 @@ function stepper(ex,set,field){
  const st=draft[ex.id][set];
  const bw=field==="w"&&ex.bw;
  const time=field==="r"&&ex.metric==="time";
- const step=1;                                   /* every press moves by 1 */
  const unit=field==="w"?"kg":(time?"sec":"reps");
  const box=el("div","stepper"+(bw?" bw":"")+(st.on?"":" off"));
  const minus=el("button");minus.textContent="–";
@@ -314,7 +401,7 @@ function stepper(ex,set,field){
  const plus=el("button");plus.textContent="+";
  const paint=()=>{v.textContent=bw?"body":(st[field]==null?"–":st[field]);};paint();
  if(bw){minus.disabled=plus.disabled=true;minus.style.opacity=plus.style.opacity=.3;}
- const bump=d=>()=>{if(!st.on)return;let c=st[field]==null?0:st[field];c=Math.max(0,c+d*step);st[field]=c;paint();mark(ex.id);};
+ const bump=d=>()=>{if(!st.on)return;let c=st[field]==null?0:st[field];c=Math.max(0,c+d);st[field]=c;paint();mark(ex.id);};
  minus.onclick=bump(-1);plus.onclick=bump(1);
  box.append(minus,val,plus);return box;
 }
@@ -355,13 +442,13 @@ function collect(){let any=false;const entries=[];
  slotEx(viewKey).forEach(ex=>{const sets=draft[ex.id].map(s=>({w:s.w,r:s.r,on:s.on}));if(sets.some(s=>s.on))any=true;
   entries.push({id:ex.id,exercise:ex.n,cat:ex.cat,metric:ex.metric||"reps",sets});});
  return{any,entries};}
-async function finish(){
+function finish(){
  const {any,entries}=collect();if(!any){toast("Keep at least one set on");return;}
- const ss={id:Date.now(),date:new Date().toISOString(),session:viewKey,entries,synced:false};
- sessions.push(ss);if(viewKey===ORDER[rotIdx%3])rotIdx=(rotIdx+1)%3;
- write(LS.sessions,sessions);write(LS.idx,rotIdx);
- if(endpoint){ss.synced=await push(ss);write(LS.sessions,sessions);}
- toast(ss.synced?"Logged & synced":"Logged"+(endpoint?" · sync failed (saved local)":""));
+ const ss={id:String(Date.now()),date:new Date().toISOString(),session:viewKey,entries};
+ sessions.push(ss);write(LS.sessions,sessions);
+ recomputeRot();
+ queueOp({action:"logSession",session:ss});
+ toast(endpoint?"Logged · saving to Sheet":"Logged");
  viewKey=ORDER[rotIdx%3];initDraft();renderHeader();renderTrain();
 }
 $("#finishBtn").onclick=finish;
@@ -371,18 +458,17 @@ function renderHistory(){
  const v=$("#view-history");v.innerHTML="";
  if(!sessions.length){v.innerHTML="<div class='empty'>No sessions yet. Log your first from the Train tab.</div>";return;}
  [...sessions].reverse().forEach(ss=>{
-  const c=el("div","hist");const h=el("h3");h.textContent="Session "+ss.session;
-  const p=el("span","pill"+(ss.synced?" ok":""));p.textContent=ss.synced?"synced":"local";h.append(p);c.append(h);
+  const c=el("div","hist");const h=el("h3");h.textContent="Session "+ss.session;c.append(h);
   const d=new Date(ss.date);const m=el("div","meta");
-  m.textContent=d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})+" · "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});c.append(m);
-  ss.entries.forEach(en=>{const done=en.sets.filter(s=>s.on!==false);if(!done.length)return;
+  m.textContent=isNaN(d)?"":d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})+" · "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});c.append(m);
+  (ss.entries||[]).forEach(en=>{const done=(en.sets||[]).filter(s=>s.on!==false);if(!done.length)return;
    const txt=done.map(s=>{const a=en.metric==="time"?(s.r!=null?s.r+"s":"–"):(s.r??"–");return s.w!=null?s.w+"×"+a:a;}).join("  ");
    const line=el("div","line");line.innerHTML="<b>"+en.exercise+"</b> — "+txt;c.append(line);});
   v.append(c);
  });
 }
 
-/* ===== plan editor ===== */
+/* ===== plan editor (slot CRUD) ===== */
 function thumbEl(ex,size){
  const t=el("div","thumb");if(size){t.style.width=t.style.height=size+"px";}
  const src=imgFor(ex);
@@ -392,16 +478,19 @@ function thumbEl(ex,size){
 function renderPlan(){
  const v=$("#libList");v.innerHTML="";
  CATS.forEach(cat=>{
-  const items=allEx().filter(e=>e.cat===cat);if(!items.length)return;
+  const items=catalog.filter(e=>e.cat===cat);if(!items.length)return;
   const g=el("div","grp");const h=el("h4");h.textContent=cat;g.append(h);
   items.forEach(ex=>{
    const row=el("div","lib");
    const nm=el("div","nm");nm.innerHTML="<div class='t'>"+ex.n+"</div><div class='s'>"+ex.sub+"</div>";
    const chips=el("div","slotchips");
    ORDER.forEach(k=>{
-    const on=(slots[k]||[]).includes(ex.id);const ch=el("button","chip"+(on?" on":""));ch.textContent=k;
-    ch.onclick=()=>{slots[k]=slots[k]||[];const i=slots[k].indexOf(ex.id);if(i>=0)slots[k].splice(i,1);else slots[k].push(ex.id);
-     write(LS.slots,slots);ch.classList.toggle("on");if(k===viewKey){initDraft();renderTrain();}renderHeader();};
+    const on=ex.slots.includes(k);const ch=el("button","chipbtn"+(on?" on":""));ch.textContent=k;
+    ch.onclick=()=>{
+     const i=ex.slots.indexOf(k);if(i>=0)ex.slots.splice(i,1);else ex.slots.push(k);
+     ch.classList.toggle("on");saveExercise(ex);
+     if(k===viewKey){initDraft();renderTrain();}renderHeader();
+    };
     chips.append(ch);
    });
    row.append(thumbEl(ex,40),nm,chips);g.append(row);
@@ -410,69 +499,85 @@ function renderPlan(){
  });
 }
 
-/* ===== settings: image + exercise manager ===== */
+/* ===== settings: exercise CRUD ===== */
 function renderManager(){
  const box=$("#mgr");box.innerHTML="";
  CATS.forEach(cat=>{
-  const items=allEx().filter(e=>e.cat===cat);if(!items.length)return;
+  const items=catalog.filter(e=>e.cat===cat);if(!items.length)return;
   const g=el("div","grp");const h=el("h4");h.textContent=cat;g.append(h);
   items.forEach(ex=>{
    const row=el("div","mgr-row");
    const prev=el("div","prev");const paint=()=>{prev.innerHTML="";const src=imgFor(ex);
     if(src){const im=el("img");im.src=src;im.onerror=()=>{prev.innerHTML="";prev.textContent="bad link";};prev.append(im);}else prev.textContent="none";};
    paint();
-   const u=el("div","u");const t=el("div","t");t.textContent=ex.n;
-   const inp=el("input");inp.placeholder="paste image link (https://…)";inp.value=imgFor(ex);inp.inputMode="url";
-   inp.onchange=()=>{imgMap[ex.id]=inp.value.trim();write(LS.img,imgMap);paint();
-    if(slotEx(viewKey).some(e=>e.id===ex.id))renderTrain();toast(inp.value.trim()?"Image updated":"Image cleared");};
-   u.append(t,inp);row.append(prev,u);
-   if(ex.id.startsWith("u")){const x=el("button","x");x.textContent="×";x.title="Remove exercise";
-    x.onclick=()=>{if(!confirm("Remove "+ex.n+"?"))return;
-     userEx=userEx.filter(e=>e.id!==ex.id);delete imgMap[ex.id];
-     ORDER.forEach(k=>{slots[k]=(slots[k]||[]).filter(id=>id!==ex.id);});
-     write(LS.userex,userEx);write(LS.img,imgMap);write(LS.slots,slots);
-     renderManager();renderHeader();renderTrain();toast("Removed");};
-    row.append(x);}
-   g.append(row);
+   const u=el("div","u");
+   const nmI=el("input");nmI.className="nm";nmI.value=ex.n;nmI.placeholder="exercise name";
+   nmI.onchange=()=>{ex.n=nmI.value.trim()||ex.n;nmI.value=ex.n;saveExercise(ex);if(view==="plan")renderPlan();if(slotEx(viewKey).some(e=>e.id===ex.id))renderTrain();toast("Name saved");};
+   const imI=el("input");imI.placeholder="image link (https://…)";imI.value=ex.image||"";imI.inputMode="url";
+   imI.onchange=()=>{ex.image=imI.value.trim();saveExercise(ex);paint();if(slotEx(viewKey).some(e=>e.id===ex.id))renderTrain();toast(ex.image?"Image saved":"Image cleared");};
+   u.append(nmI,imI);
+   const x=el("button","x");x.textContent="×";x.title="Delete exercise";
+   x.onclick=()=>{if(!confirm("Delete "+ex.n+"? This removes it from every slot and from the Sheet."))return;deleteExercise(ex.id);};
+   row.append(prev,u,x);g.append(row);
   });
   box.append(g);
  });
 }
+function saveExercise(ex){
+ const n=normEx(ex);const i=catalog.findIndex(e=>e.id===n.id);
+ if(i>=0)catalog[i]=n;else catalog.push(n);
+ write(LS.catalog,catalog);
+ queueOp({action:"saveExercise",ex:n});
+}
+function deleteExercise(id){
+ catalog=catalog.filter(e=>e.id!==id);write(LS.catalog,catalog);
+ queueOp({action:"deleteExercise",id:id});
+ renderManager();renderHeader();if(view==="plan")renderPlan();if(view==="train"){initDraft();renderTrain();}
+ toast("Deleted");
+}
 function addExercise(){
  const name=$("#nx-name").value.trim();if(!name){toast("Name it first");return;}
- const ex={id:"u"+Date.now().toString(36),n:name,cat:$("#nx-cat").value,sub:$("#nx-cat").value,
-  sets:Math.max(1,parseInt($("#nx-sets").value)||3),reps:Math.max(1,parseInt($("#nx-reps").value)||10),
-  metric:$("#nx-metric").value,bw:$("#nx-bw").checked};
- userEx.push(ex);write(LS.userex,userEx);
- const link=$("#nx-img").value.trim();if(link){imgMap[ex.id]=link;write(LS.img,imgMap);}
+ const ex=normEx({id:"u"+Date.now().toString(36),n:name,cat:$("#nx-cat").value,sub:$("#nx-cat").value,
+  sets:parseInt($("#nx-sets").value)||3,reps:parseInt($("#nx-reps").value)||10,
+  metric:$("#nx-metric").value,bw:$("#nx-bw").checked,slots:[],image:$("#nx-img").value.trim()});
+ saveExercise(ex);
  $("#nx-name").value="";$("#nx-img").value="";$("#nx-sets").value=3;$("#nx-reps").value=10;$("#nx-bw").checked=false;
  renderManager();toast("Added — assign it in Plan");
 }
 
-/* ===== sync + data ===== */
+/* ===== misc ===== */
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
-async function push(ss){if(!endpoint)return false;try{await fetch(endpoint,{method:"POST",body:JSON.stringify(ss)});return true;}catch{return false;}}
-$("#saveUrl").onclick=()=>{endpoint=$("#url").value.trim();write(LS.url,endpoint);toast("Endpoint saved");};
-$("#syncAll").onclick=async()=>{if(!endpoint){toast("Add an endpoint first");return;}let n=0;
- for(const ss of sessions){if(!ss.synced&&await push(ss)){ss.synced=true;n++;}}write(LS.sessions,sessions);renderHistory();toast(n?"Synced "+n:"Nothing to sync");};
-$("#exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify({sessions,rotIdx,slots,imgMap,userEx},null,2)],{type:"application/json"});
+$("#connect").onclick=connect;
+$("#refresh").onclick=()=>{if(!endpoint){toast("Connect first");return;}setChip("saving","refreshing…");pull().then(()=>toast("Refreshed"));};
+$("#pushAll").onclick=async()=>{if(!endpoint){toast("Connect first");return;}setChip("saving","pushing…");
+ try{const res=await apiPost({action:"replaceCatalog",exercises:catalog});if(res&&res.state)applyRemote(res.state,{});setChip("synced","synced");toast("Pushed to Sheet");}
+ catch(e){setChip("offline","offline");toast("Push failed");}};
+$("#exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify({catalog,sessions},null,2)],{type:"application/json"});
  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="workout-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();};
-$("#resetBtn").onclick=()=>{if(!confirm("Clear all logged sessions on this device? Export a backup first if unsure."))return;
- sessions=[];rotIdx=0;write(LS.sessions,sessions);write(LS.idx,rotIdx);viewKey=ORDER[0];initDraft();renderHeader();renderTrain();renderHistory();toast("Cleared");};
+$("#resetBtn").onclick=()=>{if(!confirm("Reset this device's cached copy? Your Sheet data is untouched; reconnect to pull it back."))return;
+ localStorage.removeItem(LS.catalog);localStorage.removeItem(LS.sessions);localStorage.removeItem(LS.outbox);
+ catalog=seedCatalog();sessions=[];outbox=[];write(LS.catalog,catalog);recomputeRot();viewKey=ORDER[0];
+ initDraft();renderHeader();renderTrain();toast("Cache reset");};
 $("#nx-add").onclick=addExercise;
 
-/* ===== nav ===== */
 $("#nav").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
- [...$("#nav").children].forEach(x=>x.classList.toggle("sel",x===b));const v=b.dataset.view;
- ["train","history","plan","settings"].forEach(k=>$("#view-"+k).classList.toggle("hidden",k!==v));
- $("#finishWrap").style.display=v==="train"?"":"none";
- if(v==="history")renderHistory();if(v==="plan")renderPlan();
- if(v==="settings"){renderManager();$("#verNote").textContent="Local-first · "+sessions.length+" session(s) on this device.";}});
+ [...$("#nav").children].forEach(x=>x.classList.toggle("sel",x===b));view=b.dataset.view;
+ ["train","history","plan","settings"].forEach(k=>$("#view-"+k).classList.toggle("hidden",k!==view));
+ $("#finishWrap").style.display=view==="train"?"":"none";
+ if(view==="history"){renderHistory();pull();}
+ if(view==="plan"){renderPlan();pull();}
+ if(view==="settings"){renderManager();$("#verNote").textContent=(outbox.length?outbox.length+" change(s) waiting to sync · ":"")+catalog.length+" exercises cached.";}});
+
+window.addEventListener("online",()=>{if(endpoint){setChip("saving","reconnecting…");flush();}});
+window.addEventListener("offline",()=>setChip("offline","offline"));
 
 /* ===== init ===== */
 $("#url").value=endpoint;
 $("#nx-cat").innerHTML=CATS.map(c=>"<option>"+c+"</option>").join("");
 initDraft();renderHeader();renderTrain();
+if(endpoint){setChip("saving","syncing…");$("#connStatus").innerHTML="Status: <b>connecting…</b>";
+ flush().then(pull).then(()=>{$("#connStatus").innerHTML="Status: <b>connected</b>";});}
+else setChip("","local only");
 </script>
 </body>
 </html>
