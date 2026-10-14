@@ -4,6 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Rotation — workout log</title>
+<meta name="theme-color" content="#101218" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Rotation" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -92,6 +101,14 @@
   .finish .inner{max-width:560px;margin:0 auto}
   .btn-main{width:100%;border:none;border-radius:var(--r);padding:16px;font-family:"Barlow Condensed";font-weight:700;font-size:22px;background:linear-gradient(#f0c052,var(--brass));color:#241900;box-shadow:0 6px 18px rgba(231,180,63,.25)}
   .btn-main:active{transform:translateY(1px)}
+  .btn-main:disabled{opacity:.45;box-shadow:none}
+  .ex.done{border-color:var(--ok)}
+  .ex.done::before{background:var(--ok)}
+  .target{color:var(--ink-dim);font-size:13px;margin:11px 0 2px}
+  .ctl{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:4px}
+  .ctl .lab{font-size:11px;color:var(--ink-faint);text-align:center;margin-bottom:4px}
+  .donebtn{width:100%;margin-top:11px;padding:13px;border-radius:11px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-weight:700;font-family:"Barlow Condensed";font-size:18px}
+  .donebtn.on{background:var(--ok);border-color:var(--ok);color:#06240f}
 
   .hist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-top:11px}
   .hist h3{margin:0;font-family:"Barlow Condensed";font-size:20px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
@@ -353,8 +370,9 @@ async function flush(){
 }
 function applyRemote(state,opts){
  opts=opts||{};
- if(state&&Array.isArray(state.exercises)&&state.exercises.length){catalog=state.exercises.map(normEx);write(LS.catalog,catalog);}
- if(state&&Array.isArray(state.sessions)){sessions=state.sessions;write(LS.sessions,sessions);}
+ const pending=outbox.length>0; /* local has unsynced edits — don't let the Sheet overwrite them */
+ if(!pending&&state&&Array.isArray(state.exercises)&&state.exercises.length){catalog=state.exercises.map(normEx);write(LS.catalog,catalog);}
+ if(!pending&&state&&Array.isArray(state.sessions)){sessions=state.sessions;write(LS.sessions,sessions);}
  recomputeRot();
  if(view!=="train"||opts.hard){viewKey=ORDER[rotIdx%3];}
  renderHeader();
@@ -398,43 +416,50 @@ function renderHeader(){
   const l=el("div","l display");l.textContent=k;const t=el("div","t");t.textContent=coverOf(k).length+"/6 groups";
   b.append(l,t);b.onclick=()=>{viewKey=k;initDraft();renderHeader();renderTrain();};sw.append(b);
  });
- $("#finishBtn").textContent=(viewKey===ORDER[rotIdx%3])?"Finish "+viewKey+" · log session":"Log "+viewKey+" (out of rotation)";
+ updateFinish();
 }
 
 /* ===== train ===== */
 function initDraft(){
  draft={};
  slotEx(viewKey).forEach(ex=>{
-  const last=lastFor(ex.id),arr=[];
-  for(let s=0;s<ex.sets;s++){
-   const lw=last&&last[s]?last[s].w:null, lr=last&&last[s]?last[s].r:null;
-   arr.push({w:ex.bw?null:(lw!=null?lw:10), r:lr!=null?lr:ex.reps, on:true});
-  }
-  draft[ex.id]=arr;
+  const last=lastFor(ex.id);
+  const lw=last&&last[0]?last[0].w:null, lr=last&&last[0]?last[0].r:null;
+  draft[ex.id]={w:ex.bw?null:(lw!=null?lw:10), r:lr!=null?lr:ex.reps, done:false};
  });
 }
-function stepper(ex,set,field){
- const st=draft[ex.id][set];
+function stepper(ex,field,onChange){
+ const d=draft[ex.id];
  const bw=field==="w"&&ex.bw;
  const time=field==="r"&&ex.metric==="time";
  const unit=field==="w"?"kg":(time?"sec":"reps");
- const box=el("div","stepper"+(bw?" bw":"")+(st.on?"":" off"));
+ const box=el("div","stepper"+(bw?" bw":""));
  const minus=el("button");minus.textContent="–";
  const val=el("div","val");const v=el("div","v");const u=el("div","u");u.textContent=unit;val.append(v,u);
  const plus=el("button");plus.textContent="+";
- const paint=()=>{v.textContent=bw?"body":(st[field]==null?"–":st[field]);};paint();
+ const paint=()=>{v.textContent=bw?"body":(d[field]==null?"–":d[field]);};paint();
  if(bw){minus.disabled=plus.disabled=true;minus.style.opacity=plus.style.opacity=.3;}
- const bump=d=>()=>{if(!st.on)return;let c=st[field]==null?0:st[field];c=Math.max(0,c+d);st[field]=c;paint();mark(ex.id);};
+ const bump=s=>()=>{let c=d[field]==null?0:d[field];c=Math.max(0,c+s);d[field]=c;paint();onChange&&onChange();};
  minus.onclick=bump(-1);plus.onclick=bump(1);
  box.append(minus,val,plus);return box;
 }
-function mark(id){const c=document.querySelector(`.ex[data-id="${id}"]`);if(c)c.classList.add("touched");}
+function targetText(ex){
+ const d=draft[ex.id];const unit=ex.metric==="time"?"sec":"reps";
+ return ex.sets+" sets · "+(d.r==null?"–":d.r)+" "+unit+(ex.bw?" · bodyweight":" · "+(d.w==null?"–":d.w)+" kg");
+}
+function updateFinish(){
+ const n=slotEx(viewKey).filter(ex=>draft[ex.id]&&draft[ex.id].done).length;
+ const b=$("#finishBtn");
+ b.textContent=n?("Log "+viewKey+" · "+n+" done"):"Tick exercises as you finish";
+ b.disabled=!n;
+}
 function renderTrain(){
  const list=$("#exList");list.innerHTML="";
  const exs=slotEx(viewKey);
- if(!exs.length){list.innerHTML="<div class='empty'>No exercises on "+viewKey+" yet. Add some from the Plan tab.</div>";return;}
+ if(!exs.length){list.innerHTML="<div class='empty'>No exercises on "+viewKey+" yet. Add some from the Plan tab.</div>";updateFinish();return;}
  exs.forEach(ex=>{
-  const card=el("div","ex");card.dataset.id=ex.id;
+  const d=draft[ex.id];
+  const card=el("div","ex"+(d.done?" done":""));card.dataset.id=ex.id;
   const src=imgFor(ex);
   const banner=el("div","banner"+(src?"":" noimg"));
   if(src){const im=el("img");im.src=src;im.alt=ex.n;im.loading="lazy";
@@ -450,23 +475,30 @@ function renderTrain(){
   idb.append(nm,sub);
   const musc=el("div","ex-musc");musc.textContent=ex.cat;
   head.append(idb,musc);card.append(head);
-  const cols=el("div","cols");cols.innerHTML="<span>set</span><span>weight</span><span>"+(ex.metric==="time"?"time":"reps")+"</span>";card.append(cols);
-  draft[ex.id].forEach((st,s)=>{
-   const row=el("div","setrow");
-   const tog=el("button","tog"+(st.on?" on":""));tog.innerHTML="<span class='n display'>"+(s+1)+"</span><span class='c'>"+(st.on?"✓":"skip")+"</span>";
-   const w=stepper(ex,s,"w"),r=stepper(ex,s,"r");
-   tog.onclick=()=>{st.on=!st.on;tog.className="tog"+(st.on?" on":"");tog.querySelector(".c").textContent=st.on?"✓":"skip";w.classList.toggle("off",!st.on);r.classList.toggle("off",!st.on);mark(ex.id);};
-   row.append(tog,w,r);card.append(row);
-  });
+
+  const tl=el("div","target");tl.textContent=targetText(ex);card.append(tl);
+  const upd=()=>{tl.textContent=targetText(ex);};
+  const ctl=el("div","ctl");
+  const wc=el("div");wc.innerHTML="<div class='lab'>weight</div>";wc.append(stepper(ex,"w",upd));
+  const rc=el("div");rc.innerHTML="<div class='lab'>"+(ex.metric==="time"?"time":"reps")+"</div>";rc.append(stepper(ex,"r",upd));
+  ctl.append(wc,rc);card.append(ctl);
+
+  const done=el("button","donebtn"+(d.done?" on":""));
+  const paintDone=()=>{done.className="donebtn"+(d.done?" on":"");done.textContent=d.done?"✓ Done":"Mark done";card.classList.toggle("done",d.done);};
+  paintDone();
+  done.onclick=()=>{d.done=!d.done;paintDone();updateFinish();};
+  card.append(done);
   list.append(card);
  });
+ updateFinish();
 }
 function collect(){let any=false;const entries=[];
- slotEx(viewKey).forEach(ex=>{const sets=draft[ex.id].map(s=>({w:s.w,r:s.r,on:s.on}));if(sets.some(s=>s.on))any=true;
+ slotEx(viewKey).forEach(ex=>{const d=draft[ex.id];if(!d||!d.done)return;any=true;
+  const sets=[];for(let i=0;i<ex.sets;i++)sets.push({w:d.w,r:d.r,on:true});
   entries.push({id:ex.id,exercise:ex.n,cat:ex.cat,metric:ex.metric||"reps",sets});});
  return{any,entries};}
 function finish(){
- const {any,entries}=collect();if(!any){toast("Keep at least one set on");return;}
+ const {any,entries}=collect();if(!any){toast("Tick at least one exercise as done");return;}
  const ss={id:String(Date.now()),date:new Date().toISOString(),session:viewKey,entries};
  sessions.push(ss);write(LS.sessions,sessions);
  recomputeRot();
@@ -624,7 +656,7 @@ $("#nav").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)
  [...$("#nav").children].forEach(x=>x.classList.toggle("sel",x===b));view=b.dataset.view;
  ["train","history","plan","settings"].forEach(k=>$("#view-"+k).classList.toggle("hidden",k!==view));
  $("#finishWrap").style.display=view==="train"?"":"none";
- if(view==="history"){renderHistory();pull();}
+ if(view==="history"){renderHistory();}
  if(view==="plan"){renderPlan();}
  if(view==="settings"){renderManager();$("#verNote").textContent=(outbox.length?outbox.length+" change(s) waiting to sync · ":"")+catalog.length+" exercises cached.";}});
 
@@ -638,6 +670,8 @@ initDraft();renderHeader();renderTrain();
 if(endpoint){setChip("saving","syncing…");$("#connStatus").innerHTML="Status: <b>connecting…</b>";
  flush().then(pull).then(()=>{$("#connStatus").innerHTML="Status: <b>connected</b>";});}
 else setChip("","local only");
+
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}
 </script>
 </body>
 </html>
