@@ -110,11 +110,17 @@
   .donebtn{width:100%;margin-top:11px;padding:13px;border-radius:11px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-weight:700;font-family:"Barlow Condensed";font-size:18px}
   .donebtn.on{background:var(--ok);border-color:var(--ok);color:#06240f}
 
-  .hist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-top:11px}
-  .hist h3{margin:0;font-family:"Barlow Condensed";font-size:20px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
-  .hist .meta{color:var(--ink-dim);font-size:13px;margin:2px 0 9px}
-  .hist .line{font-size:14px;color:var(--ink-dim);padding:4px 0;border-top:1px solid var(--line)}
-  .hist .line b{color:var(--ink);font-weight:600}
+  .log{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:9px}
+  .log-h{font-family:"Barlow Condensed";font-weight:700;font-size:18px;line-height:1}
+  .log-meta{color:var(--ink-faint);font-size:12px;margin:1px 0 7px}
+  .log-row{display:flex;align-items:center;gap:8px;padding:2px 0}
+  .log-ic{width:22px;height:22px;flex:0 0 auto;border-radius:50%;overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+  .log-ic.empty{background:var(--surface-3)}
+  .log-ic img{width:100%;height:100%;object-fit:cover}
+  .log-mid{flex:1;min-width:0;font-size:12.5px;line-height:1.3}
+  .log-nm{color:var(--ink);font-weight:600}
+  .log-sv{color:var(--ink-dim);font-variant-numeric:tabular-nums}
+  .log-tm{flex:0 0 auto;color:var(--ink-faint);font-size:11px;font-variant-numeric:tabular-nums}
 
   .grp{margin-top:16px}
   .grp h4{font-family:"Barlow Condensed";font-size:15px;color:var(--ink-dim);margin:0 0 7px;font-weight:600}
@@ -486,7 +492,7 @@ function renderTrain(){
   const done=el("button","donebtn"+(d.done?" on":""));
   const paintDone=()=>{done.className="donebtn"+(d.done?" on":"");done.textContent=d.done?"✓ Done":"Mark done";card.classList.toggle("done",d.done);};
   paintDone();
-  done.onclick=()=>{d.done=!d.done;paintDone();updateFinish();};
+  done.onclick=()=>{d.done=!d.done;d.doneAt=d.done?new Date().toISOString():null;paintDone();updateFinish();};
   card.append(done);
   list.append(card);
  });
@@ -495,11 +501,14 @@ function renderTrain(){
 function collect(){let any=false;const entries=[];
  slotEx(viewKey).forEach(ex=>{const d=draft[ex.id];if(!d||!d.done)return;any=true;
   const sets=[];for(let i=0;i<ex.sets;i++)sets.push({w:d.w,r:d.r,on:true});
-  entries.push({id:ex.id,exercise:ex.n,cat:ex.cat,metric:ex.metric||"reps",sets});});
+  entries.push({id:ex.id,exercise:ex.n,cat:ex.cat,metric:ex.metric||"reps",at:d.doneAt||null,sets});});
  return{any,entries};}
 function finish(){
  const {any,entries}=collect();if(!any){toast("Tick at least one exercise as done");return;}
- const ss={id:String(Date.now()),date:new Date().toISOString(),session:viewKey,entries};
+ const times=entries.map(e=>e.at).filter(Boolean).sort();
+ const start=times[0]||new Date().toISOString();
+ const end=times[times.length-1]||start;
+ const ss={id:String(Date.now()),date:start,start:start,end:end,session:viewKey,entries};
  sessions.push(ss);write(LS.sessions,sessions);
  recomputeRot();
  queueOp({action:"logSession",session:ss});
@@ -509,16 +518,32 @@ function finish(){
 $("#finishBtn").onclick=finish;
 
 /* ===== history ===== */
+const fmtDay=iso=>{const d=new Date(iso);return isNaN(d)?"":d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});};
+const fmtTime=iso=>{const d=new Date(iso);return isNaN(d)?"":d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});};
+function fmtSet(s,metric){const a=metric==="time"?(s.r!=null?s.r+"s":"–"):(s.r??"–");return s.w!=null?s.w+"×"+a:String(a);}
 function renderHistory(){
  const v=$("#view-history");v.innerHTML="";
  if(!sessions.length){v.innerHTML="<div class='empty'>No sessions yet. Log your first from the Train tab.</div>";return;}
  [...sessions].reverse().forEach(ss=>{
-  const c=el("div","hist");const h=el("h3");h.textContent="Session "+ss.session;c.append(h);
-  const d=new Date(ss.date);const m=el("div","meta");
-  m.textContent=isNaN(d)?"":d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})+" · "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});c.append(m);
-  (ss.entries||[]).forEach(en=>{const done=(en.sets||[]).filter(s=>s.on!==false);if(!done.length)return;
-   const txt=done.map(s=>{const a=en.metric==="time"?(s.r!=null?s.r+"s":"–"):(s.r??"–");return s.w!=null?s.w+"×"+a:a;}).join("  ");
-   const line=el("div","line");line.innerHTML="<b>"+en.exercise+"</b> — "+txt;c.append(line);});
+  const c=el("div","log");
+  const st=ss.start||ss.date, en=ss.end||ss.date;
+  const h=el("div","log-h");
+  h.innerHTML="<span class='display'>Session "+ss.session+"</span>";
+  const meta=el("div","log-meta");
+  meta.textContent=fmtDay(st)+" · "+fmtTime(st)+(en&&en!==st?" – "+fmtTime(en):"");
+  c.append(h,meta);
+  (ss.entries||[]).forEach(entry=>{
+   const done=(entry.sets||[]).filter(s=>s.on!==false);if(!done.length)return;
+   const ex=byId(entry.id);const src=ex?imgFor(ex):"";
+   const row=el("div","log-row");
+   const ic=el("span","log-ic"+(src?"":" empty"));
+   if(src){const im=el("img");im.src=src;im.alt="";im.onerror=()=>{ic.classList.add("empty");ic.innerHTML="";};ic.append(im);}
+   const mid=el("span","log-mid");
+   mid.innerHTML="<span class='log-nm'>"+entry.exercise+"</span> <span class='log-sv'>— "+done.map(s=>fmtSet(s,entry.metric)).join(" ")+"</span>";
+   row.append(ic,mid);
+   if(entry.at){const tm=el("span","log-tm");tm.textContent=fmtTime(entry.at);row.append(tm);}
+   c.append(row);
+  });
   v.append(c);
  });
 }
